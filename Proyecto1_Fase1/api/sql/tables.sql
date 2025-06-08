@@ -1,0 +1,16 @@
+-- Crear tabla para RAM
+CREATE TABLE IF NOT EXISTS metricas_ram (
+  id SERIAL PRIMARY KEY,
+  total REAL NOT NULL,
+  libre REAL NOT NULL,
+  uso REAL NOT NULL,
+  porcentaje INTEGER NOT NULL,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Crear tabla para CPU
+CREATE TABLE IF NOT EXISTS metricas_cpu (
+  id SERIAL PRIMARY KEY,
+  porcentajeUso INTEGER NOT NULL,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
