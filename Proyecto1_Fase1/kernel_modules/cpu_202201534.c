@@ -39,8 +39,8 @@ static int cpu_show(struct seq_file *m, void *v) {
     kstat1 = kcpustat_cpu(0);
     obtener_tiempos_cpu(&kstat1, &used1, &total1);
 
-    // espera de 200ms
-    msleep(200);
+    // espera de 2000ms
+    msleep(2000);
 
     // 2da lectura
     kstat2 = kcpustat_cpu(0);

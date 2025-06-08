@@ -1,7 +1,47 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ApexChartCard from './ApexChartCard';
 
 const Dashboard = () => {
+  const [ram, setRam] = useState(null);
+  const [cpu, setCpu] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMetricas = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/metricas');
+        const data = await res.json();
+
+        if (!Array.isArray(data)) throw new Error("Respuesta inválida");
+
+        const reversed = [...data].reverse();
+        const ultimaRAM = reversed.find(m => m.tipo === 'ram');
+        const ultimaCPU = reversed.find(m => m.tipo === 'cpu');
+
+        if (ultimaRAM?.total && ultimaRAM?.libre && ultimaRAM?.uso !== undefined) {
+          setRam(ultimaRAM);
+        }
+
+        if (ultimaCPU?.porcentajeUso !== undefined) {
+          setCpu(ultimaCPU);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error al cargar métricas:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchMetricas();
+    const interval = setInterval(fetchMetricas, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando métricas...</div>;
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -29,23 +69,32 @@ const Dashboard = () => {
         justifyContent: 'center',
         flexWrap: 'wrap',
       }}>
-        <ApexChartCard
-          title="Métricas RAM"
-          series={[70, 30]}
-          labels={['En uso', 'Sin usar']}
-          colors={['#b526f4', '#ca98ff']}
-          extraInfo={{
-            total: '7GB',
-            libre: '3GB',
-            porcentaje: 66
-          }}
-        />
-        <ApexChartCard
-          title="Métricas CPU"
-          series={[60, 40]}
-          labels={['En uso', 'Sin usar']}
-          colors={['#acf426', '#cfff75']}
-        />
+        {ram && (
+            <ApexChartCard
+            key={ram.porcentaje}
+            title="Métricas RAM"
+            series={[
+              parseFloat((ram.uso / 1024).toFixed(2)),
+              parseFloat((ram.libre / 1024).toFixed(2))
+            ]}
+            labels={['En uso (GB)', 'Libre (GB)']}
+            colors={['#b526f4', '#ca98ff']}
+            extraInfo={{
+              total: `${(ram.total / 1024).toFixed(1)} GB`,
+              libre: `${(ram.libre / 1024).toFixed(1)} GB`,
+              porcentaje: ram.porcentaje
+            }}
+          />        
+        )}
+        {cpu && (
+          <ApexChartCard
+            key={cpu.porcentajeUso} // Forzar actualización
+            title="Métricas CPU"
+            series={[cpu.porcentajeUso, 100 - cpu.porcentajeUso]}
+            labels={['En uso (%)', 'Libre (%)']}
+            colors={['#acf426', '#cfff75']}
+          />
+        )}
       </div>
     </div>
   );

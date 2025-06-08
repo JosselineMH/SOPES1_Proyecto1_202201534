@@ -19,8 +19,8 @@ static int ram_show(struct seq_file *m, void *v) {
 
     si_meminfo(&info);
 
-    total = info.totalram * info.mem_unit / 1024;
-    libre = info.freeram * info.mem_unit / 1024;
+    total = info.totalram * info.mem_unit / (1024 *1024);
+    libre = info.freeram * info.mem_unit / (1024* 1024);
     usado = total - libre;
     porcentaje = (usado * 100) / total;
 
