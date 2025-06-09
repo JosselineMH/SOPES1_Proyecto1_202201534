@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: monitor_postgres
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: josseline
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: monitorServicios
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./api
+    container_name: monitor_api
+    ports:
+      - "3000:3000"
+    environment:
+      PGHOST: postgres
+      PGUSER: josseline
+      PGPASSWORD: 123
+      PGDATABASE: monitorServicios
+      PGPORT: 5432
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: monitor_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+  backend:
+    build:
+      context: ./monitoring_agent
+    container_name: monitor_backend
+    depends_on:
+      - api
+    environment:
+      API_URL: http://api:3000/metricas
+
+volumes:
+  pgdata:
