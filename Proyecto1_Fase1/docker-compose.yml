@@ -7,12 +7,67 @@ services:
     restart: always
     ports:
       - "5433:5432"
+    networks:
+      - proyecto1Fase1_network
     environment:
       POSTGRES_USER: josseline
       POSTGRES_PASSWORD: 123
-      POSTGRES_DB: monitorServicios 
+      POSTGRES_DB: monitorServicios
     volumes:
       - pgdata:/var/lib/postgresql/data
-  
+
+  api:
+    image: josselinemontecinos7/f1-api-node
+    container_name: monitor_api
+    ports:
+      - "3000:3000"
+    environment:
+      PGHOST: postgres
+      PGUSER: josseline
+      PGPASSWORD: 123
+      PGDATABASE: monitorServicios
+      PGPORT: 5432
+    networks:
+      - proyecto1Fase1_network
+    depends_on:
+      - postgres
+
+  frontend:
+    image: josselinemontecinos7/f1-frontend
+    container_name: monitor_frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - proyecto1Fase1_network
+    depends_on:
+      - api
+
+  backend:
+    image: josselinemontecinos7/f1-monitoring-go
+    container_name: monitor_backend
+    restart: unless-stopped
+    ports:
+      - "6000:6000"
+    networks:
+      - proyecto1Fase1_network
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    privileged: true
+    security_opt:
+      - "apparmor=unconfined"
+      - "seccomp=unconfined"
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:3000/metricas
+      - PROC_PATH=/host/proc
+
+      
+
 volumes:
   pgdata:
+
+networks:
+  proyecto1Fase1_network:
+    driver: bridge
