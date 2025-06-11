@@ -24,6 +24,12 @@ type MetricaRAM struct {
 	Porcentaje int    `json:"porcentaje"`
 }
 
+var (
+	ultimaCPU MetricaCPU
+	ultimaRAM MetricaRAM
+	mu        sync.RWMutex
+)
+
 func leerCPU(path string) (MetricaCPU, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -92,10 +98,7 @@ func enviarMetrica(metrica interface{}, apiURL string) {
 		return
 	}
 
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Post(apiURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("Error al enviar:", err)
@@ -117,30 +120,16 @@ type resultado struct {
 	errRAM error
 }
 
-func main() {
-	apiURL := os.Getenv("API_URL")
-	if apiURL == "" {
-		apiURL = "http://localhost:3000/metricas"
-	}
-
-	cpuPath := "/proc/cpu_202201534"
-	ramPath := "/proc/ram_202201534"
-
-	fmt.Printf("Iniciando recolector de métricas...\n")
-	fmt.Printf("API URL: %s\n", apiURL)
-
+func recolectar(apiURL, cpuPath, ramPath string) {
 	for {
 		fmt.Println("--- Nuevo ciclo de recolección ---")
-
 		resultChan := make(chan resultado, 1)
-
 		var wg sync.WaitGroup
 		var res resultado
 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
 			cpuChan := make(chan MetricaCPU, 1)
 			errChan := make(chan error, 1)
 
@@ -161,15 +150,13 @@ func main() {
 				res.errCPU = err
 				fmt.Printf("Error leyendo CPU: %v\n", err)
 			case <-time.After(3 * time.Second):
-				res.errCPU = fmt.Errorf("timeout leyendo CPU después de 3 segundos")
-				fmt.Println("Timeout leyendo CPU")
+				res.errCPU = fmt.Errorf("timeout leyendo CPU")
 			}
 		}()
 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
 			ram, err := leerRAM(ramPath)
 			if err != nil {
 				res.errRAM = err
@@ -187,21 +174,63 @@ func main() {
 
 		select {
 		case result := <-resultChan:
-			// Enviar CPU si no hubo error
 			if result.errCPU == nil {
+				mu.Lock()
+				ultimaCPU = result.cpu
+				mu.Unlock()
 				enviarMetrica(result.cpu, apiURL)
 			}
-
-			// Enviar RAM si no hubo error
 			if result.errRAM == nil {
+				mu.Lock()
+				ultimaRAM = result.ram
+				mu.Unlock()
 				enviarMetrica(result.ram, apiURL)
 			}
-
 		case <-time.After(5 * time.Second):
-			fmt.Println("Timeout global - alguna operación está tardando demasiado")
+			fmt.Println("Timeout global")
 		}
 
-		fmt.Println("Esperando 5 segundos antes del próximo ciclo...")
 		time.Sleep(5 * time.Second)
 	}
+}
+
+func servidorWeb() {
+	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Recolector activo"))
+	})
+
+	http.HandleFunc("/metricas", func(w http.ResponseWriter, r *http.Request) {
+		mu.RLock()
+		defer mu.RUnlock()
+
+		metricas := []interface{}{ultimaCPU, ultimaRAM}
+		jsonData, err := json.Marshal(metricas)
+		if err != nil {
+			http.Error(w, "Error al codificar métricas", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonData)
+	})
+
+	port := "6000"
+	fmt.Println("Servidor web activo en puerto " + port)
+	http.ListenAndServe(":"+port, nil)
+}
+
+func main() {
+	apiURL := os.Getenv("API_URL")
+	if apiURL == "" {
+		apiURL = "http://localhost:3000/metricas"
+	}
+	cpuPath := "/proc/cpu_202201534"
+	ramPath := "/proc/ram_202201534"
+
+	fmt.Println("Iniciando recolector de métricas...")
+	fmt.Println("API URL:", apiURL)
+
+	go servidorWeb()
+	recolectar(apiURL, cpuPath, ramPath)
 }
