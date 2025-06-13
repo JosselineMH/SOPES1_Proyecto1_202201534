@@ -10,8 +10,6 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("202201534");
-MODULE_DESCRIPTION("Modulo de monitoreo de RAM en JSON");
-MODULE_VERSION("1.0");
 
 static int ram_show(struct seq_file *m, void *v) {
     struct sysinfo info;

@@ -1,10 +1,8 @@
-#!/bin/bash
-
-# Script para desplegar 10 contenedores que estresan solo CPU y RAM
+# Script para desplegar 10 contenedores para estresar CPU y RAM
 
 OPTIONS=(
-    "--cpu 1 --timeout 60s"
-    "--vm 2 --vm-bytes 256M --timeout 60s"
+    "--cpu 1 --timeout 45s"
+    "--vm 2 --vm-bytes 256M --timeout 45s"
 )
 
 for i in {1..10}; do

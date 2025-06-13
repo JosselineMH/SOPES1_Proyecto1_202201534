@@ -14,17 +14,15 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("202201534");
-MODULE_DESCRIPTION("Módulo de monitoreo de CPU en JSON con doble lectura");
-MODULE_VERSION("1.2");
 
 static void obtener_tiempos_cpu(struct kernel_cpustat *kstat, u64 *used, u64 *total) {
     u64 user = kstat->cpustat[CPUTIME_USER];
     u64 nice = kstat->cpustat[CPUTIME_NICE];
     u64 system = kstat->cpustat[CPUTIME_SYSTEM];
     u64 idle = kstat->cpustat[CPUTIME_IDLE];
-    u64 iowait = kstat->cpustat[CPUTIME_IOWAIT];
-    u64 irq = kstat->cpustat[CPUTIME_IRQ];
-    u64 softirq = kstat->cpustat[CPUTIME_SOFTIRQ];
+    u64 iowait = kstat->cpustat[CPUTIME_IOWAIT]; // I/O
+    u64 irq = kstat->cpustat[CPUTIME_IRQ]; // Interrupciones
+    u64 softirq = kstat->cpustat[CPUTIME_SOFTIRQ]; 
 
     *used = user + nice + system + irq + softirq;
     *total = *used + idle + iowait;

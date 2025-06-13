@@ -1,13 +1,8 @@
-#!/bin/bash
+# Script para Instalar y configurar módulos del kernel
 
-echo "🔧 Compilando módulos del kernel..."
+echo "Instalando módulos del kernel..."
 
 cd ../kernel_modules || exit 1
-
-# Eliminar módulos si ya están cargados
-echo "Verificando módulos previamente cargados..."
-sudo rmmod ram_202201534 2>/dev/null
-sudo rmmod cpu_202201534 2>/dev/null
 
 make clean
 make
