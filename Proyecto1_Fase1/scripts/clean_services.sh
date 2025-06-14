@@ -5,6 +5,6 @@ sudo rmmod cpu_202201534
 echo "Se eliminaron los módulos del kernel"
 
 # 2. Apagar los servicios de Docker Compose
-docker-compose down -v
+docker-compose down 
 echo "Se detuvieron los servicios de Docker Compose"
 
