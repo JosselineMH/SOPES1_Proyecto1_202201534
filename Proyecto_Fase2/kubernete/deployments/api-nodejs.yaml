@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-nodejs
+  namespace: so1-fase2
+  labels:
+    app: api-nodejs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-nodejs
+  template:
+    metadata:
+      labels:
+        app: api-nodejs
+        tier: api 
+    spec:
+      containers:
+      - name: api-nodejs
+        image: api-node:latest
+        ports:
+        - containerPort: 3000
+        imagePullPolicy: Never
+        env:
+        - name: DB_HOST
+          value: "mysql-service"
+        - name: DB_USER
+          value: "root"
+        - name: DB_PASSWORD
+          value: "123"
+        - name: DB_NAME
+          value: "metricas_db"
+        - name: DB_PORT
+          value: "3306"
+        - name: PORT
+          value: "3000"

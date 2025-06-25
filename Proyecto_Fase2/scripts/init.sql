@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS metricas (
     procesos_durmiendo INT,
     procesos_zombie INT,
     procesos_parados INT,
+    api VARCHAR(255) NOT NULL,
     hora DATETIME
 );

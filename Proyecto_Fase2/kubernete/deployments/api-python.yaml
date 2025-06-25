@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-python
+  namespace: so1-fase2
+  labels:
+    app: api-python
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-python
+  template:
+    metadata:
+      labels:
+        app: api-python
+        tier: api
+    spec:
+      containers:
+      - name: api-python
+        image: api-python:latest
+        ports:
+        - containerPort: 5000
+        imagePullPolicy: Never
+        env:
+        - name: DB_HOST
+          value: "mysql-service"
+        - name: DB_USER
+          value: "root"
+        - name: DB_PASSWORD
+          value: "123"
+        - name: DB_NAME
+          value: "metricas_db"
+        - name: DB_PORT
+          value: "3306"
