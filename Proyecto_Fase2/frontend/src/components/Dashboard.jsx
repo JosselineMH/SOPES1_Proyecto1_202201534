@@ -1,43 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import io from 'socket.io-client';
 import ApexChartCard from './ApexChartCard';
 import ProcessChartCard from './ProcessChartCard';
-
 
 const Dashboard = () => {
   const [ram, setRam] = useState(null);
   const [cpu, setCpu] = useState(null);
+  const [procesos, setProcesos] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMetricas = async () => {
-      try {
-        const res = await fetch('http://localhost:3000/metricas');
-        const data = await res.json();
+    const socket = io('http://localhost:4000');
 
-        if (!Array.isArray(data)) throw new Error("Respuesta inválida");
+    socket.on('metricas', (data) => {
+      console.log('📡 Datos recibidos del backend (Socket.IO):', data);
+      setRam(data.ram);
+      setCpu(data.cpu);
+      setProcesos(data.procesos);
+      setLoading(false);
+    });
 
-        const reversed = [...data].reverse();
-        const ultimaRAM = reversed.find(m => m.tipo === 'ram');
-        const ultimaCPU = reversed.find(m => m.tipo === 'cpu');
-
-        if (ultimaRAM?.total && ultimaRAM?.libre && ultimaRAM?.uso !== undefined) {
-          setRam(ultimaRAM);
-        }
-
-        if (ultimaCPU?.porcentajeUso !== undefined) {
-          setCpu(ultimaCPU);
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error('Error al cargar métricas:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchMetricas();
-    const interval = setInterval(fetchMetricas, 5000);
-    return () => clearInterval(interval);
+    return () => socket.disconnect();
   }, []);
 
   if (loading) {
@@ -72,7 +55,7 @@ const Dashboard = () => {
         flexWrap: 'wrap',
       }}>
         {ram && (
-            <ApexChartCard
+          <ApexChartCard
             key={ram.porcentaje}
             title="Métricas RAM"
             series={[
@@ -86,11 +69,11 @@ const Dashboard = () => {
               libre: `${(ram.libre / 1024).toFixed(1)} GB`,
               porcentaje: ram.porcentaje
             }}
-          />        
+          />
         )}
         {cpu && (
           <ApexChartCard
-            key={cpu.porcentajeUso} // Forzar actualización
+            key={cpu.porcentajeUso}
             title="Métricas CPU"
             series={[cpu.porcentajeUso, 100 - cpu.porcentajeUso]}
             labels={['En uso (%)', 'Libre (%)']}
@@ -98,7 +81,10 @@ const Dashboard = () => {
           />
         )}
       </div>
-      <ProcessChartCard />
+
+      {procesos && (
+        <ProcessChartCard procesos={procesos} />
+      )}
 
     </div>
   );

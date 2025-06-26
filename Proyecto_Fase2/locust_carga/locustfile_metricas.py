@@ -25,7 +25,7 @@ class UsuarioSimulado(TaskSet):
                 response.failure(f"Fallo con status {response.status_code}")
 
       
-        if not archivo_guardado and (time.time() - tiempo_inicio > 180):
+        if not archivo_guardado and (time.time() - tiempo_inicio >= 180):
             with lock:
                 with open("metricas_recolectadas.json", "w") as archivo:
                     json.dump(metricas_guardadas, archivo, indent=4)
