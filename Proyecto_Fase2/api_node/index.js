@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 });
 
 // Endpoint para insertar métricas
-app.post('/insertar-metrica', (req, res) => {
+app.post('/insertar', (req, res) => {
   console.log('Datos recibidos:', req.body);
 
   const {
@@ -151,7 +151,7 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`API Node.js escuchando en puerto ${PORT}`);
-  console.log(`   POST http://localhost:${PORT}/insertar-metrica`);
+  console.log(`   POST http://localhost:${PORT}/insertar`);
   console.log(`   GET  http://localhost:${PORT}/health`);
   console.log(`   GET  http://localhost:${PORT}/test-db`);
 });

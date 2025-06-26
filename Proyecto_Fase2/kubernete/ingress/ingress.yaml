@@ -1,8 +1,8 @@
-
+# Principal: Python API (recibe inicialmente todo el tráfico)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: python-api-ingress
+  name: api-ingress
   namespace: so1-fase2
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -14,29 +14,27 @@ spec:
   rules:
   - http:
       paths:
-      - path: /insertar-metrica
+      - path: /insertar
         pathType: Prefix
         backend:
           service:
             name: api-python-service
             port:
               number: 80
-
 ---
-# # Ingress Para NodeJS API
+# Canary: NodeJS API (recibe 50% del tráfico en /insertar)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nodejs-api-ingress-canary
+  name: api-ingress-canary
   namespace: so1-fase2
   annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "50"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-body-size: "1m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
-    # Configuración canary para 50% del tráfico
-    nginx.ingress.kubernetes.io/canary: "true"
-    nginx.ingress.kubernetes.io/canary-weight: "50"
 spec:
   ingressClassName: nginx
   rules:
