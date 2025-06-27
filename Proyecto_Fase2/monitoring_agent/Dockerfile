@@ -1,16 +1,13 @@
-FROM golang:1.22 as builder
+FROM golang:1.22
 
 WORKDIR /app
 
 COPY . .
 
-RUN go mod init mi_api && go build -o app .
+RUN go mod tidy
 
-FROM debian:bullseye-slim
-
-WORKDIR /app
-COPY --from=builder /app/app .
+RUN CGO_ENABLED=0 GOOS=linux go build -o monitor
 
 EXPOSE 6000
 
-CMD ["./app"]
+CMD ["./monitor"]

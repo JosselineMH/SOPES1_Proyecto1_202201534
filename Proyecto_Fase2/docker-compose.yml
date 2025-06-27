@@ -1,20 +1,18 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: mysql_local
-    restart: always
+  monitor-go:
+    image: josselinemontecinos7/api-go-monitor
+    container_name: monitor_go_fase2
     ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: metricas_db
-      MYSQL_USER: josseline
-      MYSQL_PASSWORD: clave123
+      - "6000:6000"
+    restart: unless-stopped
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-
-volumes:
-  mysql_data:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    privileged: true
+    security_opt:
+      - "apparmor=unconfined"
+      - "seccomp=unconfined"
+    environment:
+      - PROC_PATH=/host/proc
