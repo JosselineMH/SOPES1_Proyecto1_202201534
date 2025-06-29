@@ -18,17 +18,19 @@ spec:
     spec:
       containers:
       - name: api-nodejs
-        image: api-node:latest
+        image: josselinemontecinos7/api-node-fase2:latest
         ports:
         - containerPort: 3000
-        imagePullPolicy: Never
         env:
         - name: DB_HOST
-          value: "mysql-service"
+          value: "34.41.95.190"
         - name: DB_USER
           value: "root"
         - name: DB_PASSWORD
-          value: "123"
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_PASSWORD
         - name: DB_NAME
           value: "metricas_db"
         - name: DB_PORT

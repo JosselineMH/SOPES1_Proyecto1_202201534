@@ -20,90 +20,69 @@ app.use((req, res, next) => {
 });
 
 // Endpoint para insertar métricas
-app.post('/insertar', (req, res) => {
-  console.log('Datos recibidos:', req.body);
-
-  const {
-    total_ram,
-    ram_libre,
-    uso_ram,
-    porcentaje_ram,
-    porcentaje_cpu_uso,
-    porcentaje_cpu_libre,
-    procesos_corriendo,
-    total_procesos,
-    procesos_durmiendo,
-    procesos_zombie,
-    procesos_parados,
-    hora
-  } = req.body;
-
-
-  const campos = {
-    total_ram,
-    ram_libre,
-    uso_ram,
-    porcentaje_ram,
-    porcentaje_cpu_uso,
-    porcentaje_cpu_libre,
-    procesos_corriendo,
-    total_procesos,
-    procesos_durmiendo,
-    procesos_zombie,
-    procesos_parados
-  };
-
-  const camposFaltantes = Object.entries(campos)
-    .filter(([_, value]) => value === undefined || value === null)
-    .map(([key]) => key);
-
-  if (camposFaltantes.length > 0) {
-    return res.status(400).json({
-      success: false,
-      message: `Faltan campos requeridos: ${camposFaltantes.join(', ')}`
-    });
-  }
-
-  const sql = `
-    INSERT INTO metricas (
+app.post('/insertar', async (req, res) => {
+  try {
+    const {
       total_ram, ram_libre, uso_ram, porcentaje_ram,
       porcentaje_cpu_uso, porcentaje_cpu_libre,
       procesos_corriendo, total_procesos,
-      procesos_durmiendo, procesos_zombie, procesos_parados, api ,hora
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+      procesos_durmiendo, procesos_zombie, procesos_parados, hora
+    } = req.body;
 
-  const horaFinal = hora || new Date();
+    const campos = {
+      total_ram, ram_libre, uso_ram, porcentaje_ram,
+      porcentaje_cpu_uso, porcentaje_cpu_libre,
+      procesos_corriendo, total_procesos,
+      procesos_durmiendo, procesos_zombie, procesos_parados
+    };
 
-  const values = [
-    total_ram, ram_libre, uso_ram, porcentaje_ram,
-    porcentaje_cpu_uso, porcentaje_cpu_libre,
-    procesos_corriendo, total_procesos,
-    procesos_durmiendo, procesos_zombie, procesos_parados, "NODEJS", horaFinal
-  ];
+    const camposFaltantes = Object.entries(campos)
+      .filter(([_, value]) => value === undefined || value === null)
+      .map(([key]) => key);
 
-  console.log('Ejecutando query con valores:', values);
-
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      console.error('Error al insertar:', err);
-      return res.status(500).json({
+    if (camposFaltantes.length > 0) {
+      return res.status(400).json({
         success: false,
-        message: 'Error al insertar datos',
-        error: err.message
+        message: `Faltan campos requeridos: ${camposFaltantes.join(', ')}`
       });
     }
 
-    console.log('Métrica insertada correctamente. ID:', result.insertId);
+    const sql = `
+      INSERT INTO metricas (
+        total_ram, ram_libre, uso_ram, porcentaje_ram,
+        porcentaje_cpu_uso, porcentaje_cpu_libre,
+        procesos_corriendo, total_procesos,
+        procesos_durmiendo, procesos_zombie, procesos_parados, api, hora
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      total_ram, ram_libre, uso_ram, porcentaje_ram,
+      porcentaje_cpu_uso, porcentaje_cpu_libre,
+      procesos_corriendo, total_procesos,
+      procesos_durmiendo, procesos_zombie, procesos_parados, "NODEJS", hora || new Date()
+    ];
+
+    const [result] = await db.query(sql, values);
+
     res.status(201).json({
       success: true,
       message: 'Métrica insertada correctamente',
       insertId: result.insertId,
       affectedRows: result.affectedRows
     });
-  });
+
+  } catch (err) {
+    console.error('Error al insertar:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error al insertar datos',
+      error: err.message
+    });
+  }
 });
+
 
 app.get('/health', (req, res) => {
   res.json({

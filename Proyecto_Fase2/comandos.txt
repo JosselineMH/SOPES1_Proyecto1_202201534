@@ -1,0 +1,75 @@
+locust -f locustfile_envio.py --host=http://192.168.49.2 -u 150 -r 1 --headless -t 30s
+// locust con vm en gpc
+locust -f locustfile_metricas.py --host=http://34.171.75.113:6000 -u 300 -r 1 --headless -t 185s
+
+// locust local
+locust -f locustfile_envio.py --host=http://34.28.204.8 -u 150 -r 1 --headless -t 30s
+locust -f locustfile_metricas.py --host=http://localhost:6000 -u 300 -r 1 --headless -t 185s
+
+
+// MOVER IMAGEN A MINIKUBE
+minikube image load api-python:latest
+minikube image load josselinemontecinos7/api-node-fase2:latest
+minikube image load josselinemontecinos7/api-socket-fase2:latest
+
+
+// CREA POD
+kubectl apply -f archivo.yaml
+kubectl delete -f archivo.yaml
+
+// CANALES
+kubectl port-forward service/api-python-service 5000:80 -n so1-fase2
+kubectl port-forward service/api-nodejs-service 3000:80 -n so1-fase2
+kubectl port-forward service/mysql-service 3306:3306 -n so1-fase2
+kubectl port-forward service/api-socket-service 4000:80 -n so1-fase2
+
+
+//bd
+SELECT api, COUNT(*) AS cantidad
+FROM metricas_db.metricas
+WHERE api IN ('NODEJS', 'PYTHON')
+GROUP BY api;
+
+TRUNCATE TABLE metricas_db.metricas;
+SELECT * FROM metricas_db.metricas;
+
+
+// construir, tagear y pushear imagenes adocker hub
+docker build -t api-socket-fase2 .
+docker tag api-socket-fase2:latest josselinemontecinos7/api-socket-fase2:latest
+docker push josselinemontecinos7/api-socket-fase2:latest
+
+docker build -t api-socket3-fase2 .
+docker tag api-socket3-fase2:latest josselinemontecinos7/api-socket3-fase2:latest
+docker push josselinemontecinos7/api-socket3-fase2:latest
+
+docker build -t frontend9-fase2 .
+docker tag frontend9-fase2:latest josselinemontecinos7/frontend9-fase2:latest
+docker push josselinemontecinos7/frontend9-fase2:latest
+
+
+// credenciales termius vm
+Terminus
+sopesf2
+123
+
+// credenciale bd en gpc
+Cloud mysql
+sopes1-mysql
+123
+
+kubectl rollout restart deployment api-socket -n so1-fase2
+kubectl rollout restart deployment api-python -n so1-fase2
+
+docker run -p 3000:3000 frontend-react-fase2
+
+
+kubectl apply -f api-socket.yaml -n so1-fase2
+kubectl apply -f api-python.yaml -n so1-fase2
+kubectl apply -f api-nodejs.yaml -n so1-fase2
+kubectl apply -f db-secret.yaml -n so1-fase2
+
+gcloud container clusters create f2-monitoreo-cloud --num-nodes 2 --machine-type n1-standard-2 --zone us-central1-a
+
+# Obtener la IP del LoadBalancer del Ingress Controller
+kubectl get service -n ingress-nginx ingress-nginx-controller
